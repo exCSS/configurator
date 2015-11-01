@@ -1,0 +1,14 @@
+providers: [
+  {
+    key: "makefile"
+    config:
+      file: "Makefile"
+      regex: "^[A-Za-z][^$]+$"
+      overwrite_wd: true
+  }
+  {
+    key: "bt"
+    config:
+      commands: []
+  }
+]

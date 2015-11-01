@@ -3,12 +3,14 @@
  */
 
 #include <ncurses.h>
+#include <panel.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define MAIN 1
 
 WINDOW *content;
+PANEL *editor;
 char *filename = "test/simple.ex";
 
 int entries = 0;
@@ -45,6 +47,7 @@ void show_entries (void)
       wattroff(content, A_REVERSE);
     mvwprintw(content, 1+x, 2, "%s -> %s", items[x].entry, items[x].value);
   }
+  wattroff(content, A_REVERSE);
 }
 
 void get_entries (void)
@@ -78,6 +81,86 @@ void get_entries (void)
 
 }
 
+void show_editor(void)
+{
+  int x = 0, y = 0;
+  getmaxyx(stdscr, y, x);
+  WINDOW *EDIT = newwin(6, 50, y/2 - 3, x/2 - 25);
+  wbkgdset(EDIT, COLOR_PAIR(MAIN) | A_REVERSE);
+  wclear(EDIT);
+  box(EDIT, 0,0);
+
+  editor = new_panel(EDIT);
+  show_panel(editor);
+
+  // Create editor
+
+  mvwprintw(EDIT, 0, 21, "> EDIT <");
+
+
+
+
+  mvwprintw(EDIT, 2, 1, "Setting %s to:", items[cur].entry);
+  wrefresh(EDIT);
+
+  doupdate();
+
+
+  update_panels();
+
+  int len = strlen(items[cur].value);
+
+  char *text = malloc(len);
+  strncpy(text, items[cur].value, len);
+
+  len++;
+
+  int c = 0;
+
+  curs_set(2);
+  mvwprintw(EDIT, 3, 1, text);
+  wrefresh(EDIT);
+  while((c = getch()) != '\n')
+  {
+    mvwprintw(EDIT, 3, 1, "                                                ");
+    wrefresh(EDIT);
+    if(c != KEY_BACKSPACE)
+    {
+      len++;
+      text = realloc(text, len);
+      text[len-2] = c;
+      text[len-1] = '\0';
+    }
+    else if(len > 1)
+    {
+      len--;
+      text = realloc(text, len);
+      text[len -1] = '\0';
+    }
+
+    mvwprintw(EDIT, 3, 1, text);
+    wrefresh(EDIT);
+  }
+  curs_set(0);
+
+
+
+  touchwin(content);
+  wrefresh(content);
+  touchwin(stdscr);
+  wrefresh(stdscr);
+
+  free(items[cur].value);
+  items[cur].value = malloc(len);
+
+  strncpy(items[cur].value, text, len);
+
+
+
+
+
+}
+
 int main_loop (void)
 {
   clear();
@@ -105,6 +188,22 @@ int main_loop (void)
 
     int c = getch();
 
+    switch (c)
+    {
+      case KEY_UP:
+        if(cur > 0)
+          cur--;
+      break;
+
+      case KEY_DOWN:
+        if(cur < entries-1)
+          cur++;
+      break;
+
+      case 0xA:
+        show_editor();
+      break;
+    }
 
   }
 
@@ -123,10 +222,15 @@ int main (void)
   noecho();
   start_color(); //Enable Colors
 
+  keypad(stdscr, true);
+
   init_pair(MAIN, COLOR_WHITE, COLOR_BLUE);
 
   color_set(MAIN, NULL);
   bkgd(COLOR_PAIR(MAIN));
+
+  cbreak();
+  nl();
 
   return main_loop();
 }

@@ -1,6 +1,6 @@
 CC      = gcc
 CFLAGS  = -std=c99 -Wall -Wextra
-LDFLAGS = -lncurses
+LDFLAGS = -lncurses -lpanel
 
 build: main.o
 	$(CC) $+ -o ../excss-configurator $(LDFLAGS)
