@@ -10,7 +10,6 @@
 #define MAIN 1
 
 WINDOW *content;
-PANEL *editor;
 char *filename = "test/simple.ex";
 
 int entries = 0;
@@ -90,7 +89,7 @@ void show_editor(void)
   wclear(EDIT);
   box(EDIT, 0,0);
 
-  editor = new_panel(EDIT);
+  PANEL *editor = new_panel(EDIT);
   show_panel(editor);
 
   // Create editor
@@ -165,6 +164,83 @@ void write_config(void)
   fclose(h);
 }
 
+void add_entry(void)
+{
+  entries++;
+
+  items = realloc(items, sizeof(Entry) * entries);
+
+  int x = 0, y = 0;
+  getmaxyx(stdscr, y, x);
+  WINDOW *EDIT = newwin(6, 50, y/2 - 3, x/2 - 25);
+  wbkgdset(EDIT, COLOR_PAIR(MAIN) | A_REVERSE);
+  wclear(EDIT);
+  box(EDIT, 0,0);
+
+  PANEL *editor = new_panel(EDIT);
+  show_panel(editor);
+
+  // Create editor
+
+  mvwprintw(EDIT, 0, 22, "> ADD <");
+
+  mvwprintw(EDIT, 2, 1, "Name of new entry:");
+  wrefresh(EDIT);
+
+  doupdate();
+
+  update_panels();
+
+  int len = 1;
+  char *text = malloc(len);
+  text[0] = '\0';
+
+  int c = 0;
+
+  curs_set(2);
+  mvwprintw(EDIT, 3, 1, text);
+  wrefresh(EDIT);
+  while((c = getch()) != '\n')
+  {
+
+    mvwprintw(EDIT, 3, 1, "                                                ");
+    wrefresh(EDIT);
+    if(c != KEY_BACKSPACE)
+    {
+      len++;
+      text = realloc(text, len);
+      text[len-2] = c;
+      text[len-1] = '\0';
+    }
+    else if(len > 1)
+    {
+      len--;
+      text = realloc(text, len);
+      text[len -1] = '\0';
+    }
+
+    mvwprintw(EDIT, 3, 1, text);
+    wrefresh(EDIT);
+  }
+  curs_set(0);
+
+
+
+  touchwin(content);
+  wrefresh(content);
+  touchwin(stdscr);
+  wrefresh(stdscr);
+
+
+  items[entries-1].value = malloc(6);
+  strncpy(items[entries-1].value, "value\0", 6);
+
+  items[entries-1].entry = malloc(len);
+  strncpy(items[entries-1].entry, text, len);
+
+
+}
+
 int main_loop (void)
 {
 
@@ -228,6 +304,12 @@ int main_loop (void)
       case 'S':
       case KEY_F(2):
         write_config();
+      break;
+
+      case 'a':
+      case 'A':
+      case KEY_F(3):
+        add_entry();
       break;
     }
     clear();

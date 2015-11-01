@@ -1,4 +1,4 @@
 [ExtendedCSS]
-BackgroundColor="black"
-ForegroundColor="lightgreen"
-FontType="sans-serif"
+BackgroundColor="cyan"
+ForegroundColor="lightblue"
+FontType="monospace serif"
