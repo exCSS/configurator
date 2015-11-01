@@ -78,7 +78,7 @@ void get_entries (void)
     strncpy(items[entries-1].value, v, strlen(v) +1);
 
   }
-
+  fclose(handle);
 }
 
 void show_editor(void)
@@ -97,14 +97,10 @@ void show_editor(void)
 
   mvwprintw(EDIT, 0, 21, "> EDIT <");
 
-
-
-
   mvwprintw(EDIT, 2, 1, "Setting %s to:", items[cur].entry);
   wrefresh(EDIT);
 
   doupdate();
-
 
   update_panels();
 
@@ -122,6 +118,7 @@ void show_editor(void)
   wrefresh(EDIT);
   while((c = getch()) != '\n')
   {
+
     mvwprintw(EDIT, 3, 1, "                                                ");
     wrefresh(EDIT);
     if(c != KEY_BACKSPACE)
@@ -155,14 +152,32 @@ void show_editor(void)
 
   strncpy(items[cur].value, text, len);
 
+}
 
-
-
-
+void write_config(void)
+{
+  FILE *h = fopen(filename, "w");
+  fprintf(h, "[ExtendedCSS]\n");
+  for(int x=0; x < entries;x++)
+  {
+    fprintf(h, "%s=%s\n", items[x].entry, items[x].value);
+  }
+  fclose(h);
 }
 
 int main_loop (void)
 {
+
+  slk_set(1, "[q] Exit", 1);
+  slk_set(2, "[s] Save", 1);
+  slk_set(3, "[a] Add", 1);
+  slk_set(4, "", 1);
+  slk_set(5, "", 1);
+  slk_set(6, "", 1);
+  slk_set(7, "", 1);
+  slk_set(8, "", 1);
+  slk_refresh();
+
   clear();
   draw_title();
 
@@ -174,11 +189,8 @@ int main_loop (void)
   wbkgd(content, COLOR_PAIR(MAIN));
   get_entries();
 
-
   while (1)
   {
-
-
     wclear(content);
     box(content, 0,0);
     show_entries();
@@ -203,17 +215,59 @@ int main_loop (void)
       case 0xA:
         show_editor();
       break;
+
+        // Keys
+
+      case 'q':
+      case 'Q':
+      case KEY_F(1):
+        exit(0);
+      break;
+
+      case 's':
+      case 'S':
+      case KEY_F(2):
+        write_config();
+      break;
     }
+    clear();
+    draw_title();
 
   }
 
   return 0;
 }
 
-
-
-int main (void)
+void usage(char *c)
 {
+  printf( "<exCSS Configurator/>\n"\
+  " :: Usage:\n" \
+  "     %s <filename>\n" \
+  " Used to configure .ex files\n" \
+  " Copyright (C) 2015 Marius Messerschmidt\n", c);
+}
+
+int main (int argc, char **argv)
+{
+
+  if(argc < 2)
+  {
+    usage(argv[0]);
+    exit(1);
+  }
+
+  if(strcmp(argv[1],"-h") == 0)
+  {
+    usage(argv[0]);
+    exit(0);
+  }
+
+  filename = argv[1];
+
+  // Softkeys
+  slk_init(0);
+
+
   // Init nCurses
   initscr();
   atexit(quit);
